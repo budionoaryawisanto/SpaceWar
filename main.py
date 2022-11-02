@@ -75,11 +75,11 @@ class Enemy(Player):
         self.rect.y += 1
         if self.rect.y > s_height:
             self.rect.x = random.randrange(0, s_width)
-            self.rect.y = random.randrange(-2000, 0)
+            self.rect.y = random.randrange(-500, 0)
         self.shoot()
 
     def shoot(self):
-        if self.rect.y in (0, 30, 40, 50, 200, 300, 700):
+        if self.rect.y % 80 == 0:
             enemybullet = EnemyBullet(enemy_bullet)
             enemybullet.rect.x = self.rect.x + 28
             enemybullet.rect.y = self.rect.y + 20
@@ -90,16 +90,15 @@ class Enemy(Player):
 class Meteor(Enemy):
     def __init__(self, img):
         super().__init__(img)
-        self.rect.x = -200
-        self.rect.y = random.randrange(200, 500)
-        self.move = 1
+        self.rect.x = random.randrange(0, s_width)
+        self.rect.y = random.randrange(-500, 0)
+        screen.blit(self.image, (self.rect.x, self.rect.y))
 
     def update(self):
-        self.rect.x += self.move
-        if self.rect.x > s_width + 200:
-            self.move *= -1
-        elif self.rect.x < -200:
-            self.move *= -1
+        self.rect.y += 1.5
+        if self.rect.y > s_height:
+            self.rect.x = random.randrange(0, s_width)
+            self.rect.y = random.randrange(-500, 0)
 
 class PlayerBullet(pygame.sprite.Sprite):
     def __init__(self, img):
@@ -147,7 +146,7 @@ class Game:
             sprite_group.add(self.enemy)
 
     def create_meteor(self):
-        for i in range(1):
+        for i in range(3):
             self.meteor = Meteor(meteor)
             meteor_group.add(self.meteor)
             sprite_group.add(self.meteor)
@@ -171,10 +170,10 @@ class Game:
 
                 if event.type == KEYDOWN:
                     self.player.shoot()
+
                     if event.key == K_ESCAPE:
                         pygame.quit()
                         sys.exit()
-
 
             pygame.display.update()
             clock.tick(FPS)
