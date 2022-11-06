@@ -27,6 +27,7 @@ enemy_group = pygame.sprite.Group()
 meteor_group = pygame.sprite.Group()
 playerbullet_group = pygame.sprite.Group()
 enemybullet_group = pygame.sprite.Group()
+explosion_group = pygame.sprite.Group()
 
 sprite_group = pygame.sprite.Group()
 
@@ -76,19 +77,41 @@ class Player(pygame.sprite.Sprite):
         self.image = pygame.image.load(img) 
         self.rect = self.image.get_rect()
         self.image.set_colorkey('black')
+        self.alive = True
+        self.count_to_lives = 0
+        self.activate_bullet = True
 
     def update(self):
-        mouse = pygame.mouse.get_pos()
-        self.rect.x = mouse[0] - 9
-        self.rect.y = mouse[1] - 5
+        if self.alive:
+            mouse = pygame.mouse.get_pos()
+            self.rect.x = mouse[0] - 9
+            self.rect.y = mouse[1] - 5
+        else:
+            exp_x = self.rect.x + 25
+            exp_y = self.rect.y + 25
+            explosion = Explosion(exp_x, exp_y)
+            explosion_group.add(explosion)
+            sprite_group.add(explosion)
+            self.rect.y = s_height + 400
+            self.count_to_lives += 1
+            if self.count_to_lives > 50:
+                self.alive = True
+                self.count_to_lives = 0
+                self.activate_bullet = True
+
 
     def shoot(self):
-        bullet = PlayerBullet(player_bullet)
-        mouse = pygame.mouse.get_pos()
-        bullet.rect.x = mouse[0]
-        bullet.rect.y = mouse[1]
-        playerbullet_group.add(bullet)
-        sprite_group.add(bullet)
+        if self.activate_bullet:
+            bullet = PlayerBullet(player_bullet)
+            mouse = pygame.mouse.get_pos()
+            bullet.rect.x = mouse[0]
+            bullet.rect.y = mouse[1]
+            playerbullet_group.add(bullet)
+            sprite_group.add(bullet)
+
+    def dead(self):
+        self.alive = False
+        self.activate_bullet = False
 
 class Enemy(Player):
     def __init__(self, img):
@@ -148,6 +171,32 @@ class EnemyBullet(PlayerBullet):
         if self.rect.y > s_height:
             self.kill()
 
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.exp_list = []
+        for i in range(1, 5):
+            exp = pygame.image.load(f'exp{i}.png').convert()
+            exp.set_colorkey('black')
+            exp = pygame.transform.scale(exp, (120, 120))
+            self.exp_list.append(exp)
+        self.index = 0
+        self.image = self.exp_list[self.index]
+        self.rect = self.image.get_rect()
+        self.rect.center = [x, y]
+        self.count_delay = 0
+
+    def update(self):
+        self.count_delay += 1
+        if self.count_delay >= 12:
+            if self.index < len(self.exp_list) - 1 :
+                self.count_delay = 0
+                self.index += 1
+                self.image = self.exp_list[self.index]
+        if self.index >= len(self.exp_list) - 1 :
+            if self.count_delay >= 12 :
+                self.kill()
+
 class Game: 
     def __init__(self):
         self.count_enemyHit = 0
@@ -202,6 +251,12 @@ class Game:
         for i in hits:
             self.count_enemyHit += 1
             if self.count_enemyHit == 3:
+                exp_x = i.rect.x + 40
+                exp_y = i.rect.y + 50
+                explosion = Explosion(exp_x, exp_y)
+                explosion_group.add(explosion)
+                sprite_group.add(explosion)
+
                 i.rect.x = random.randrange(0, s_width)
                 i.rect.y = random.randrange(-600, -300)
                 self.count_enemyHit = 0
@@ -211,6 +266,12 @@ class Game:
         for i in hits:
             self.count_meteorHit += 1
             if self.count_meteorHit == 6:
+                exp_x = i.rect.x + 60
+                exp_y = i.rect.y + 70
+                explosion = Explosion(exp_x, exp_y)
+                explosion_group.add(explosion)
+                sprite_group.add(explosion)
+
                 i.rect.x = random.randrange(0, s_width)
                 i.rect.y = random.randrange(-600, -300)
                 self.count_meteorHit = 0
@@ -219,6 +280,7 @@ class Game:
         hits = pygame.sprite.spritecollide(self.player, enemybullet_group, True)
         if hits:
             self.lives -= 1
+            self.player.dead()
             if self.lives == 0:
                 pygame.quit()
                 sys.exit()
