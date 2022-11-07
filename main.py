@@ -29,6 +29,7 @@ playerbullet_group = pygame.sprite.Group()
 enemybullet_group = pygame.sprite.Group()
 explosion_group = pygame.sprite.Group()
 
+pygame.mouse.set_visible(False)
 sprite_group = pygame.sprite.Group()
 
 class Background(pygame.sprite.Sprite):
@@ -80,18 +81,25 @@ class Player(pygame.sprite.Sprite):
         self.alive = True
         self.count_to_lives = 0
         self.activate_bullet = True
+        self.alpha_duration = 0
 
     def update(self):
         if self.alive:
+            self.image.set_alpha(80)
+            self.alpha_duration += 1
+            if self.alpha_duration > 80:
+                self.image.set_alpha(255)
             mouse = pygame.mouse.get_pos()
             self.rect.x = mouse[0] - 9
-            self.rect.y = mouse[1] - 5
+            self.rect.y = mouse[1] + 10
         else:
+            self.alpha_duration = 0
             exp_x = self.rect.x + 25
             exp_y = self.rect.y + 25
             explosion = Explosion(exp_x, exp_y)
             explosion_group.add(explosion)
             sprite_group.add(explosion)
+            pygame.time.delay(20)
             self.rect.y = s_height + 400
             self.count_to_lives += 1
             if self.count_to_lives > 50:
@@ -129,7 +137,7 @@ class Enemy(Player):
     
     def shoot(self):
         if self.rect.y > 0:
-            if self.rect.y % 80 == 0:
+            if self.rect.y % 100 == 0:
                 enemybullet = EnemyBullet(enemy_bullet)
                 enemybullet.rect.x = self.rect.x + 28
                 enemybullet.rect.y = self.rect.y + 20
@@ -277,13 +285,14 @@ class Game:
                 self.count_meteorHit = 0
 
     def enemybullet_hits_player(self):
-        hits = pygame.sprite.spritecollide(self.player, enemybullet_group, True)
-        if hits:
-            self.lives -= 1
-            self.player.dead()
-            if self.lives == 0:
-                pygame.quit()
-                sys.exit()
+        if self.player.image.get_alpha() == 255:
+            hits = pygame.sprite.spritecollide(self.player, enemybullet_group, True)
+            if hits:
+                self.lives -= 1
+                self.player.dead()
+                if self.lives == 0:
+                    pygame.quit()
+                    sys.exit()
 
     def enemybullet_hits_meteor(self):
         hits = pygame.sprite.groupcollide(meteor_group, enemybullet_group, False, True)
@@ -293,6 +302,32 @@ class Game:
                 i.rect.x = random.randrange(0, s_width)
                 i.rect.y = random.randrange(-600, -300)
                 self.count_meteorHit = 0
+
+    def player_enemy_crash(self):
+        if self.player.image.get_alpha() == 255:
+            hits = pygame.sprite.spritecollide(self.player, enemy_group, False)
+            if hits:
+                for i in hits:
+                    i.rect.x = random.randrange(0, s_width)
+                    i.rect.y = random.randrange(-600, -300) 
+                    self.lives -= 1
+                    self.player.dead()
+                    if self.lives == 0:
+                        pygame.quit()
+                        sys.exit()
+
+    def player_meteor_crash(self):
+        if self.player.image.get_alpha() == 255:
+            hits = pygame.sprite.spritecollide(self.player, meteor_group, False)
+            if hits:
+                for i in hits:
+                    i.rect.x = random.randrange(0, s_width)
+                    i.rect.y = random.randrange(-600, -300) 
+                    self.lives -= 1
+                    self.player.dead()
+                    if self.lives == 0:
+                        pygame.quit()
+                        sys.exit()
 
     def create_lives(self):
         self.lives_img = pygame.image.load(player_ship)
@@ -319,6 +354,8 @@ class Game:
             self.playerbullet_hits_meteor()
             self.enemybullet_hits_player()
             self.enemybullet_hits_meteor()
+            self.player_enemy_crash()
+            self.player_meteor_crash()
             self.create_lives()
             self.run_update()
             for event in pygame.event.get():
