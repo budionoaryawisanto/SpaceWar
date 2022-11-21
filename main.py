@@ -87,7 +87,7 @@ class Player(pygame.sprite.Sprite):
         if self.alive:
             self.image.set_alpha(80)
             self.alpha_duration += 1
-            if self.alpha_duration > 80:
+            if self.alpha_duration > 160:
                 self.image.set_alpha(255)
             mouse = pygame.mouse.get_pos()
             self.rect.x = mouse[0] - 9
@@ -124,14 +124,14 @@ class Player(pygame.sprite.Sprite):
 class Enemy(Player):
     def __init__(self, img):
         super().__init__(img)
-        self.rect.x = random.randrange(0, s_width)
+        self.rect.x = random.randrange(20, s_width - 20)
         self.rect.y = random.randrange(-500, 0)
         screen.blit(self.image, (self.rect.x, self.rect.y))
 
     def update(self):
         self.rect.y += 1
         if self.rect.y > s_height:
-            self.rect.x = random.randrange(0, s_width)
+            self.rect.x = random.randrange(20, s_width - 20)
             self.rect.y = random.randrange(-500, 0)
         self.shoot()
     
@@ -148,14 +148,14 @@ class Enemy(Player):
 class Meteor(Enemy):
     def __init__(self, img):
         super().__init__(img)
-        self.rect.x = random.randrange(0, s_width)
+        self.rect.x = random.randrange(20, s_width - 20)
         self.rect.y = random.randrange(-900, -300)
         screen.blit(self.image, (self.rect.x, self.rect.y))
 
     def update(self):
-        self.rect.y += 1
-        if self.rect.y > s_height:
-            self.rect.x = random.randrange(0, s_width)
+        self.rect.y += 2
+        if self.rect.y > s_height + 20:
+            self.rect.x = random.randrange(20, s_width - 20)
             self.rect.y = random.randrange(-900, -300)
 
 class PlayerBullet(pygame.sprite.Sprite):
@@ -166,7 +166,7 @@ class PlayerBullet(pygame.sprite.Sprite):
         self.image.set_colorkey('black')
 
     def update(self):
-        self.rect.y -= 5
+        self.rect.y -= 10
         if self.rect.y < 0:
             self.kill()
 
@@ -210,7 +210,102 @@ class Game:
         self.count_enemyHit = 0
         self.count_meteorHit = 0
         self.lives = 3
-        self.run_game()
+        self.score = 0
+        self.init_create = True
+        self.play = True
+        self.start_screen()
+
+    def start_text(self):
+        title = pygame.font.SysFont('Calibri', 70)
+        text = title.render('SPACE WAR', True, 'white')
+        text_rect = text.get_rect(center=(s_width/2, s_height/2))
+        screen.blit(text, text_rect)
+        
+        instruction = pygame.font.SysFont('Calibri', 20)
+        text = instruction.render('Press ENTER to start game...', True, 'white')
+        text_rect = text.get_rect(center=(s_width/2, s_height/2 + 100))
+        screen.blit(text, text_rect)
+
+        instruction = pygame.font.SysFont('Calibri', 20)
+        text = instruction.render('Press ESC to quit game...', True, 'white')
+        text_rect = text.get_rect(center=(s_width/2, s_height/2 + 125))
+        screen.blit(text, text_rect)
+
+        instructionPause = pygame.font.SysFont('Calibri', 20)
+        text = instructionPause.render('Press SPACE to pause/unpaused game...', True, 'white')
+        text_rect = text.get_rect(center=(s_width/2, s_height/2 + 150))
+        screen.blit(text, text_rect)
+
+
+    def start_screen(self):
+        while True:
+            screen.fill('black')
+            self.start_text()
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        pygame.quit()
+                        sys.exit()
+                    if event.key == K_RETURN:
+                        self.run_game()
+
+            pygame.display.update()
+
+
+    def pause_text(self):
+        pauseTitle = pygame.font.SysFont('Calibri', 50)
+        text = pauseTitle.render('PAUSED', True, 'white')
+        text_rect = text.get_rect(center=(s_width/2, s_height/2))
+        screen.blit(text, text_rect)
+
+
+    def pause_screen(self):
+        self.init_create = False
+        while True:
+            self.pause_text()
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        pygame.quit()
+                        sys.exit()
+                    if event.key == K_SPACE:
+                        self.run_game()
+
+            pygame.display.update()
+
+    
+    def gameOver_text(self):
+        gameOver = pygame.font.SysFont('Calibri', 70)
+        text = gameOver.render('GAME OVER', True, 'red')
+        text_rect = text.get_rect(center=(s_width/2, s_height/2))
+        screen.blit(text, text_rect)
+
+        gameOverinstr = pygame.font.SysFont('Calibri', 20)
+        text = gameOverinstr.render('PRESS ENTER', True, 'white')
+        text_rect = text.get_rect(center=(s_width/2, s_height/2 + 100))
+        screen.blit(text, text_rect)
+
+
+    def gameOver_screen(self):
+        while True:
+            screen.fill('black')
+            self.gameOver_text()
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == KEYDOWN:
+                    if event.key == K_RETURN:
+                        self.start_screen()
+
+            pygame.display.update()
+
 
     def create_background(self):
         for i in range(30):
@@ -259,6 +354,7 @@ class Game:
         for i in hits:
             self.count_enemyHit += 1
             if self.count_enemyHit == 3:
+                self.score += 3
                 exp_x = i.rect.x + 40
                 exp_y = i.rect.y + 50
                 explosion = Explosion(exp_x, exp_y)
@@ -274,6 +370,7 @@ class Game:
         for i in hits:
             self.count_meteorHit += 1
             if self.count_meteorHit == 6:
+                self.score += 5
                 exp_x = i.rect.x + 60
                 exp_y = i.rect.y + 70
                 explosion = Explosion(exp_x, exp_y)
@@ -291,14 +388,18 @@ class Game:
                 self.lives -= 1
                 self.player.dead()
                 if self.lives == 0:
-                    pygame.quit()
-                    sys.exit()
+                    self.gameOver_screen()
 
     def enemybullet_hits_meteor(self):
         hits = pygame.sprite.groupcollide(meteor_group, enemybullet_group, False, True)
         for i in hits:
             self.count_meteorHit += 1
             if self.count_meteorHit == 6:
+                exp_x = i.rect.x + 60
+                exp_y = i.rect.y + 70
+                explosion = Explosion(exp_x, exp_y)
+                explosion_group.add(explosion)
+                sprite_group.add(explosion)
                 i.rect.x = random.randrange(0, s_width)
                 i.rect.y = random.randrange(-600, -300)
                 self.count_meteorHit = 0
@@ -308,26 +409,36 @@ class Game:
             hits = pygame.sprite.spritecollide(self.player, enemy_group, False)
             if hits:
                 for i in hits:
+                    self.score += 3
+                    exp_x = i.rect.x + 40
+                    exp_y = i.rect.y + 50
+                    explosion = Explosion(exp_x, exp_y)
+                    explosion_group.add(explosion)
+                    sprite_group.add(explosion) 
                     i.rect.x = random.randrange(0, s_width)
-                    i.rect.y = random.randrange(-600, -300) 
+                    i.rect.y = random.randrange(-600, -300)
                     self.lives -= 1
                     self.player.dead()
                     if self.lives == 0:
-                        pygame.quit()
-                        sys.exit()
+                        self.gameOver_screen()
 
     def player_meteor_crash(self):
         if self.player.image.get_alpha() == 255:
             hits = pygame.sprite.spritecollide(self.player, meteor_group, False)
             if hits:
                 for i in hits:
+                    self.score += 5
+                    exp_x = i.rect.x + 60
+                    exp_y = i.rect.y + 70
+                    explosion = Explosion(exp_x, exp_y)
+                    explosion_group.add(explosion)
+                    sprite_group.add(explosion)
                     i.rect.x = random.randrange(0, s_width)
                     i.rect.y = random.randrange(-600, -300) 
                     self.lives -= 1
                     self.player.dead()
                     if self.lives == 0:
-                        pygame.quit()
-                        sys.exit()
+                        self.gameOver_screen()
 
     def create_lives(self):
         self.lives_img = pygame.image.load(player_ship)
@@ -337,17 +448,25 @@ class Game:
             screen.blit(self.lives_img, (10+n, s_height-50))
             n += 40
 
+    def create_score(self):
+        score = self.score
+        font = pygame.font.SysFont('Calibri', 30)
+        text = font.render(str(score), True, 'white')
+        text_rect = text.get_rect(center=(25, 25))
+        screen.blit(text, text_rect)
+
     def run_update(self):
         sprite_group.draw(screen)
         sprite_group.update()
 
     def run_game(self):
-        self.create_background()
-        self.create_sun()
-        self.create_moon()
-        self.create_player()
-        self.create_enemy()
-        self.create_meteor()
+        if self.init_create:
+            self.create_background()
+            self.create_sun()
+            self.create_moon()
+            self.create_player()
+            self.create_enemy()
+            self.create_meteor()
         while True:
             screen.fill('black')
             self.playerbullet_hits_enemy()
@@ -356,8 +475,9 @@ class Game:
             self.enemybullet_hits_meteor()
             self.player_enemy_crash()
             self.player_meteor_crash()
-            self.create_lives()
             self.run_update()
+            self.create_lives()
+            self.create_score()
             for event in pygame.event.get():
                 if event.type == QUIT:
                     pygame.quit()
@@ -369,6 +489,8 @@ class Game:
                     if event.key == K_ESCAPE:
                         pygame.quit()
                         sys.exit()
+                    if event.key == K_SPACE:
+                        self.pause_screen()
 
             pygame.display.update()
             clock.tick(FPS)
