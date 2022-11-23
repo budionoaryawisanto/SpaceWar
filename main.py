@@ -6,12 +6,20 @@ from pygame.locals import *
 pygame.init()
 
 
-planet = ['sun.jpg', 'moon.jpg', 'earth.jpg',]
-player_ship = 'playership.png'
-enemy_ship = 'enemyship1.png'
-meteor = 'meteor.png'
-player_bullet = 'pbullet.png'
-enemy_bullet = 'ebullet.png'
+planet = ['assets/images/sun.jpg', 'assets/images/moon.jpg', 'assets/images/earth.jpg',]
+player_ship = 'assets/images/playership.png'
+enemy_ship = 'assets/images/enemyship1.png'
+meteor = 'assets/images/meteor.png'
+player_bullet = 'assets/images/pbullet.png'
+enemy_bullet = 'assets/images/ebullet.png'
+
+
+
+shoot_sound = pygame.mixer.Sound('assets/sounds/laser.wav')
+explosion_sound = pygame.mixer.Sound('assets/sounds/explosion.wav')
+sun_sound = pygame.mixer.Sound('assets/sounds/sun.wav')
+
+pygame.mixer.init()
 
 
 screen = pygame.display.set_mode((0,0), FULLSCREEN)
@@ -54,6 +62,8 @@ class Sun(pygame.sprite.Sprite):
         self.image = pygame.image.load(img)
         self.rect = self.image.get_rect()
         self.image.set_colorkey('black')
+        if self.rect.y > 0 & self.rect.y < s_height:
+            pygame.mixer.Sound.play(sun_sound) 
 
     def update(self):
         self.rect.y += 1
@@ -183,8 +193,9 @@ class Explosion(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         self.exp_list = []
+        pygame.mixer.Sound.play(explosion_sound)
         for i in range(1, 5):
-            exp = pygame.image.load(f'exp{i}.png').convert()
+            exp = pygame.image.load(f'assets/images/exp{i}.png').convert()
             exp.set_colorkey('black')
             exp = pygame.transform.scale(exp, (120, 120))
             self.exp_list.append(exp)
@@ -212,7 +223,7 @@ class Game:
         self.lives = 3
         self.score = 0
         self.init_create = True
-        self.play = True
+        self.play = 0
         self.start_screen()
 
     def start_text(self):
@@ -238,6 +249,17 @@ class Game:
 
 
     def start_screen(self):
+        self.lives = 3
+        self.score = 0
+        sprite_group.empty()
+        background_group.empty()
+        planet_group.empty()
+        player_group.empty()
+        enemy_group.empty()
+        meteor_group.empty()
+        playerbullet_group.empty()
+        enemybullet_group.empty()
+        explosion_group.empty()
         while True:
             screen.fill('black')
             self.start_text()
@@ -484,6 +506,7 @@ class Game:
                     sys.exit()
 
                 if event.type == KEYDOWN:
+                    pygame.mixer.Sound.play(shoot_sound)
                     self.player.shoot()
 
                     if event.key == K_ESCAPE:
