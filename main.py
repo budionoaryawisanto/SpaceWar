@@ -17,7 +17,13 @@ enemy_bullet = 'assets/images/ebullet.png'
 
 shoot_sound = pygame.mixer.Sound('assets/sounds/laser.wav')
 explosion_sound = pygame.mixer.Sound('assets/sounds/explosion.wav')
-sun_sound = pygame.mixer.Sound('assets/sounds/sun.wav')
+sun_sound = pygame.mixer.Sound('assets/sounds/play.wav')
+game_over = pygame.mixer.Sound('assets/sounds/game_over.wav')
+pause_sound = pygame.mixer.Sound('assets/sounds/pause.wav')
+start_screen = pygame.mixer.Sound('assets/sounds/creepy.wav')
+end_music = pygame.mixer.Sound('assets/sounds/creepy2.wav')
+
+start_sound = pygame.mixer.music.load('assets/sounds/play.wav')
 
 pygame.mixer.init()
 
@@ -62,8 +68,6 @@ class Sun(pygame.sprite.Sprite):
         self.image = pygame.image.load(img)
         self.rect = self.image.get_rect()
         self.image.set_colorkey('black')
-        if self.rect.y > 0 & self.rect.y < s_height:
-            pygame.mixer.Sound.play(sun_sound) 
 
     def update(self):
         self.rect.y += 1
@@ -224,6 +228,7 @@ class Game:
         self.score = 0
         self.init_create = True
         self.play = 0
+        self.gameOver_soundDelay = 0
         self.start_screen()
 
     def start_text(self):
@@ -249,6 +254,8 @@ class Game:
 
 
     def start_screen(self):
+        pygame.mixer.Sound.stop(end_music)
+        pygame.mixer.Sound.play(start_screen)
         self.lives = 3
         self.score = 0
         sprite_group.empty()
@@ -272,6 +279,7 @@ class Game:
                         pygame.quit()
                         sys.exit()
                     if event.key == K_RETURN:
+                        pygame.mixer.Sound.stop(start_screen)
                         self.run_game()
 
             pygame.display.update()
@@ -285,6 +293,7 @@ class Game:
 
 
     def pause_screen(self):
+        pygame.mixer.Sound.play(pause_sound)
         self.init_create = False
         while True:
             self.pause_text()
@@ -297,6 +306,7 @@ class Game:
                         pygame.quit()
                         sys.exit()
                     if event.key == K_SPACE:
+                        pygame.mixer.Sound.play(pause_sound)
                         self.run_game()
 
             pygame.display.update()
@@ -315,9 +325,14 @@ class Game:
 
 
     def gameOver_screen(self):
+        pygame.mixer.music.stop()
+        pygame.mixer.Sound.play(game_over)
         while True:
             screen.fill('black')
             self.gameOver_text()
+            self.gameOver_soundDelay += 1
+            if self.gameOver_soundDelay > 1500:
+                pygame.mixer.Sound.play(end_music)
             for event in pygame.event.get():
                 if event.type == QUIT:
                     pygame.quit()
@@ -483,6 +498,7 @@ class Game:
 
     def run_game(self):
         if self.init_create:
+            pygame.mixer.music.play(-1)
             self.create_background()
             self.create_sun()
             self.create_moon()
