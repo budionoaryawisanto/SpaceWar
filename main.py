@@ -238,17 +238,17 @@ class Game:
         screen.blit(text, text_rect)
         
         instruction = pygame.font.SysFont('Calibri', 20)
-        text = instruction.render('Press ENTER to start game...', True, 'white')
+        text = instruction.render('Press ENTER to start game...', True, 'red')
         text_rect = text.get_rect(center=(s_width/2, s_height/2 + 100))
         screen.blit(text, text_rect)
 
         instruction = pygame.font.SysFont('Calibri', 20)
-        text = instruction.render('Press ESC to quit game...', True, 'white')
+        text = instruction.render('Press ESC to quit game...', True, 'red')
         text_rect = text.get_rect(center=(s_width/2, s_height/2 + 125))
         screen.blit(text, text_rect)
 
         instructionPause = pygame.font.SysFont('Calibri', 20)
-        text = instructionPause.render('Press SPACE to pause/unpaused game...', True, 'white')
+        text = instructionPause.render('Press SPACE to pause/unpaused game...', True, 'red')
         text_rect = text.get_rect(center=(s_width/2, s_height/2 + 150))
         screen.blit(text, text_rect)
 
@@ -293,6 +293,7 @@ class Game:
 
 
     def pause_screen(self):
+        pygame.mixer.music.pause()
         pygame.mixer.Sound.play(pause_sound)
         self.init_create = False
         while True:
@@ -306,6 +307,7 @@ class Game:
                         pygame.quit()
                         sys.exit()
                     if event.key == K_SPACE:
+                        pygame.mixer.music.unpause()
                         pygame.mixer.Sound.play(pause_sound)
                         self.run_game()
 
@@ -318,9 +320,14 @@ class Game:
         text_rect = text.get_rect(center=(s_width/2, s_height/2))
         screen.blit(text, text_rect)
 
+        score = pygame.font.SysFont('Calibri', 35)
+        text = score.render('Final Score ' + (str(self.score)), True, 'white')
+        text_rect = text.get_rect(center=(s_width/2, s_height/2 + 75))
+        screen.blit(text, text_rect)
+
         gameOverinstr = pygame.font.SysFont('Calibri', 20)
         text = gameOverinstr.render('PRESS ENTER', True, 'white')
-        text_rect = text.get_rect(center=(s_width/2, s_height/2 + 100))
+        text_rect = text.get_rect(center=(s_width/2, s_height/2 + 150))
         screen.blit(text, text_rect)
 
 
