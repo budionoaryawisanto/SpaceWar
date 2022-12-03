@@ -9,9 +9,11 @@ pygame.init()
 planet = ['assets/images/sun.jpg', 'assets/images/moon.jpg', 'assets/images/earth.jpg',]
 player_ship = 'assets/images/playership.png'
 enemy_ship = 'assets/images/enemyship1.png'
+enemy_ship2 = 'assets/images/enemyship3.png'
 meteor = 'assets/images/meteor.png'
 player_bullet = 'assets/images/pbullet.png'
 enemy_bullet = 'assets/images/ebullet.png'
+enemy_bullet2 = 'assets/images/ebullet2.png'
 
 
 
@@ -23,7 +25,7 @@ pause_sound = pygame.mixer.Sound('assets/sounds/pause.wav')
 start_screen = pygame.mixer.Sound('assets/sounds/creepy.wav')
 end_music = pygame.mixer.Sound('assets/sounds/creepy2.wav')
 
-start_sound = pygame.mixer.music.load('assets/sounds/play.wav')
+start_sound = pygame.mixer.music.load('assets/sounds/space.wav')
 
 pygame.mixer.init()
 
@@ -38,9 +40,11 @@ background_group = pygame.sprite.Group()
 planet_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 enemy_group = pygame.sprite.Group()
+enemy2_group = pygame.sprite.Group()
 meteor_group = pygame.sprite.Group()
 playerbullet_group = pygame.sprite.Group()
 enemybullet_group = pygame.sprite.Group()
+enemybullet2_group = pygame.sprite.Group()
 explosion_group = pygame.sprite.Group()
 
 pygame.mouse.set_visible(False)
@@ -138,14 +142,14 @@ class Player(pygame.sprite.Sprite):
 class Enemy(Player):
     def __init__(self, img):
         super().__init__(img)
-        self.rect.x = random.randrange(20, s_width - 20)
+        self.rect.x = random.randrange(50, s_width - 50)
         self.rect.y = random.randrange(-500, 0)
         screen.blit(self.image, (self.rect.x, self.rect.y))
 
     def update(self):
         self.rect.y += 1
         if self.rect.y > s_height:
-            self.rect.x = random.randrange(20, s_width - 20)
+            self.rect.x = random.randrange(50, s_width - 50)
             self.rect.y = random.randrange(-500, 0)
         self.shoot()
     
@@ -157,6 +161,32 @@ class Enemy(Player):
                 enemybullet.rect.y = self.rect.y + 20
                 enemybullet_group.add(enemybullet)
                 sprite_group.add(enemybullet)
+
+class Enemy2(Player):
+    def __init__(self, img):
+        super().__init__(img)
+        self.rect.x = -1000
+        self.rect.y = 50
+        self.move = 1
+        self.image.set_colorkey('white')
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+
+    def update(self):
+        self.rect.x += self.move
+        if self.rect.x > s_width + 1000:
+            self.move *= -1
+        elif self.rect.x < - 1000:
+            self.move *= -1
+        self.shoot()
+    
+    def shoot(self):
+        if self.rect.x > 0:
+            if self.rect.x % 30 == 0:
+                enemybullet2 = EnemyBullet2(enemy_bullet2)
+                enemybullet2.rect.x = self.rect.x + 95
+                enemybullet2.rect.y = self.rect.y + 160
+                enemybullet2_group.add(enemybullet2)
+                sprite_group.add(enemybullet2)
 
 
 class Meteor(Enemy):
@@ -193,6 +223,16 @@ class EnemyBullet(PlayerBullet):
         if self.rect.y > s_height:
             self.kill()
 
+class EnemyBullet2(PlayerBullet):
+    def __init__(self, img):
+        super().__init__(img)
+        self.image.set_colorkey('black')
+
+    def update(self):
+        self.rect.y += 4
+        if self.rect.y > s_height:
+            self.kill()
+
 class Explosion(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
@@ -223,9 +263,11 @@ class Explosion(pygame.sprite.Sprite):
 class Game: 
     def __init__(self):
         self.count_enemyHit = 0
+        self.count_enemyHit2 = 0
         self.count_meteorHit = 0
         self.lives = 3
         self.score = 0
+        self.level = 1
         self.init_create = True
         self.play = 0
         self.gameOver_soundDelay = 0
@@ -258,6 +300,7 @@ class Game:
         pygame.mixer.Sound.play(start_screen)
         self.lives = 3
         self.score = 0
+        self.level = 1
         sprite_group.empty()
         background_group.empty()
         planet_group.empty()
@@ -321,8 +364,13 @@ class Game:
         screen.blit(text, text_rect)
 
         score = pygame.font.SysFont('Calibri', 35)
-        text = score.render('Final Score ' + (str(self.score)), True, 'white')
+        text = score.render('Final Score  ' + (str(self.score)), True, 'white')
         text_rect = text.get_rect(center=(s_width/2, s_height/2 + 75))
+        screen.blit(text, text_rect)
+
+        level = pygame.font.SysFont('Calibri', 25)
+        text = level.render('Level ' + (str(self.level)), True, 'green')
+        text_rect = text.get_rect(center=(s_width/2, s_height/2 + 115))
         screen.blit(text, text_rect)
 
         gameOverinstr = pygame.font.SysFont('Calibri', 20)
@@ -386,6 +434,12 @@ class Game:
             self.enemy = Enemy(enemy_ship)
             enemy_group.add(self.enemy)
             sprite_group.add(self.enemy)
+    
+    def create_enemy2(self):
+        for i in range(1):
+            self.enemy2 = Enemy2(enemy_ship2)
+            enemy2_group.add(self.enemy2)
+            sprite_group.add(self.enemy2)
 
     def create_meteor(self):
         for i in range(3):
@@ -405,9 +459,24 @@ class Game:
                 explosion_group.add(explosion)
                 sprite_group.add(explosion)
 
-                i.rect.x = random.randrange(0, s_width)
+                i.rect.x = random.randrange(50, s_width - 50)
                 i.rect.y = random.randrange(-600, -300)
                 self.count_enemyHit = 0
+
+    def playerbullet_hits_enemy2(self):
+        hits = pygame.sprite.groupcollide(enemy2_group, playerbullet_group, False, True)
+        for i in hits:
+            self.count_enemyHit2 += 1
+            if self.count_enemyHit2 == 50:
+                self.score += 40
+                exp_x = i.rect.x + 120
+                exp_y = i.rect.y + 150
+                explosion = Explosion(exp_x, exp_y)
+                explosion_group.add(explosion)
+                sprite_group.add(explosion)
+
+                i.rect.x = -999
+                self.count_enemyHit2 = 0
 
     def playerbullet_hits_meteor(self):
         hits = pygame.sprite.groupcollide(meteor_group, playerbullet_group, False, True)
@@ -448,6 +517,29 @@ class Game:
                 i.rect.y = random.randrange(-600, -300)
                 self.count_meteorHit = 0
 
+    def enemybullet2_hits_player(self):
+        if self.player.image.get_alpha() == 255:
+            hits = pygame.sprite.spritecollide(self.player, enemybullet2_group, True)
+            if hits:
+                self.lives -= 1
+                self.player.dead()
+                if self.lives == 0:
+                    self.gameOver_screen()
+
+    def enemybullet2_hits_meteor(self):
+        hits = pygame.sprite.groupcollide(meteor_group, enemybullet2_group, False, True)
+        for i in hits:
+            self.count_meteorHit += 1
+            if self.count_meteorHit == 6:
+                exp_x = i.rect.x + 60
+                exp_y = i.rect.y + 70
+                explosion = Explosion(exp_x, exp_y)
+                explosion_group.add(explosion)
+                sprite_group.add(explosion)
+                i.rect.x = random.randrange(0, s_width)
+                i.rect.y = random.randrange(-600, -300)
+                self.count_meteorHit = 0
+
     def player_enemy_crash(self):
         if self.player.image.get_alpha() == 255:
             hits = pygame.sprite.spritecollide(self.player, enemy_group, False)
@@ -461,6 +553,24 @@ class Game:
                     sprite_group.add(explosion) 
                     i.rect.x = random.randrange(0, s_width)
                     i.rect.y = random.randrange(-600, -300)
+                    self.lives -= 1
+                    self.player.dead()
+                    if self.lives == 0:
+                        self.gameOver_screen()
+
+
+    def player_enemy2_crash(self):
+        if self.player.image.get_alpha() == 255:
+            hits = pygame.sprite.spritecollide(self.player, enemy2_group, False)
+            if hits:
+                for i in hits:
+                    self.score += 40
+                    exp_x = i.rect.x + 120
+                    exp_y = i.rect.y + 150
+                    explosion = Explosion(exp_x, exp_y)
+                    explosion_group.add(explosion)
+                    sprite_group.add(explosion) 
+                    i.rect.x = -999
                     self.lives -= 1
                     self.player.dead()
                     if self.lives == 0:
@@ -499,6 +609,12 @@ class Game:
         text_rect = text.get_rect(center=(25, 25))
         screen.blit(text, text_rect)
 
+    def create_level(self):
+        font = pygame.font.SysFont('Calibri', 30)
+        text = font.render('Lvl ' + str(self.level), True, 'green')
+        text_rect = text.get_rect(center=(s_width - 75, 25))
+        screen.blit(text, text_rect)
+
     def run_update(self):
         sprite_group.draw(screen)
         sprite_group.update()
@@ -511,18 +627,28 @@ class Game:
             self.create_moon()
             self.create_player()
             self.create_enemy()
-            self.create_meteor()
         while True:
             screen.fill('black')
             self.playerbullet_hits_enemy()
+            self.playerbullet_hits_enemy2()
             self.playerbullet_hits_meteor()
             self.enemybullet_hits_player()
+            self.enemybullet2_hits_player()
             self.enemybullet_hits_meteor()
+            self.enemybullet2_hits_meteor()
             self.player_enemy_crash()
+            self.player_enemy2_crash()
             self.player_meteor_crash()
             self.run_update()
             self.create_lives()
             self.create_score()
+            self.create_level()
+            if self.score >= 100 and self.level == 1:
+                self.create_meteor()
+                self.create_enemy2()
+                self.level += 1
+            elif self.score >= 300 and self.level == 2:
+                self.level += 1
             for event in pygame.event.get():
                 if event.type == QUIT:
                     pygame.quit()
