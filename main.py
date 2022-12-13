@@ -458,7 +458,8 @@ class Game:
                 explosion = Explosion(exp_x, exp_y)
                 explosion_group.add(explosion)
                 sprite_group.add(explosion)
-
+                
+                self.rect.y += 2
                 i.rect.x = random.randrange(50, s_width - 50)
                 i.rect.y = random.randrange(-600, -300)
                 self.count_enemyHit = 0
@@ -564,7 +565,7 @@ class Game:
             hits = pygame.sprite.spritecollide(self.player, enemy2_group, False)
             if hits:
                 for i in hits:
-                    self.score += 40
+                    self.count_enemyHit2 =+ 20
                     exp_x = i.rect.x + 120
                     exp_y = i.rect.y + 150
                     explosion = Explosion(exp_x, exp_y)
